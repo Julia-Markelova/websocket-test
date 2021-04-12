@@ -1,4 +1,3 @@
-
 use std::pin::Pin;
 
 use futures::{Stream, StreamExt};
@@ -12,22 +11,6 @@ use juniper_subscriptions::Coordinator;
 use std::time::Duration;
 use tokio::time;
 
-struct Weather {
-    pub kek: i32
-}
-
-#[graphql_object]
-impl Weather {
-    fn kek(&self) -> &i32 { &self.kek }
-}
-
-async fn get_weather(kek_value: i32) -> Weather {
-    Weather{
-        kek:kek_value
-    }
-}
-
-const BETWEEN: Duration = Duration::from_secs(1);
 
 #[derive(Clone)]
 pub struct Database;
@@ -49,6 +32,23 @@ impl Query {
     }
 }
 
+
+struct Weather {
+    pub kek: i32
+}
+
+#[graphql_object]
+impl Weather {
+    fn kek(&self) -> &i32 { &self.kek }
+}
+
+async fn get_weather(kek_value: i32) -> Weather {
+    Weather {
+        kek: kek_value
+    }
+}
+
+
 pub struct Subscription;
 
 type CustomStream = Pin<Box<dyn Stream<Item=Result<Weather, FieldError>> + Send>>;
@@ -58,11 +58,11 @@ static mut START: i32 = 0;
 #[graphql_subscription(context = Database)]
 impl Subscription {
     async fn hello_world() -> CustomStream {
-        let stream = futures::stream::unfold((), |state| async  {
+        let stream = futures::stream::unfold((), |state| async {
             unsafe {
-                if START < 10 {
+                if START < 5 {
                     START = START + 1;
-                    time::delay_for(BETWEEN).await;
+                    time::delay_for(Duration::from_secs(1)).await;
                     let weather = get_weather(START).await;
                     Some((Ok(weather), ()))
                 } else {
