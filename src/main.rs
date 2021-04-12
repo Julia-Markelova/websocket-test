@@ -1,6 +1,8 @@
+mod db_query;
+
 use std::pin::Pin;
 use std::time::Duration;
-
+use uuid::Uuid;
 use futures::{Stream, StreamExt};
 use juniper::{
     DefaultScalarValue, EmptyMutation, FieldError, graphql_object, graphql_subscription,
@@ -36,25 +38,29 @@ impl Query {
 }
 
 
-struct Weather {
-    pub kek: i32
+struct Task {
+    pub id: Uuid,
+    pub name: String,
 }
+
 
 #[graphql_object]
-impl Weather {
-    fn kek(&self) -> &i32 { &self.kek }
+impl Task {
+    fn id(&self) -> &Uuid { &self.id }
+    fn name(&self) -> &str { &self.name }
 }
 
-async fn get_weather(kek_value: i32) -> Weather {
-    Weather {
-        kek: kek_value
+async fn get_task() -> Task {
+    Task {
+        id: Uuid::new_v4(),
+        name: "kek".to_owned()
     }
 }
 
 
 pub struct Subscription;
 
-type CustomStream = Pin<Box<dyn Stream<Item=Result<Weather, FieldError>> + Send>>;
+type CustomStream = Pin<Box<dyn Stream<Item=Result<Task, FieldError>> + Send>>;
 
 static mut START: i32 = 0;
 
@@ -92,7 +98,7 @@ async fn main() {
     let coordinator = Coordinator::new(schema);
     let req: GraphQLRequest<DefaultScalarValue> = serde_json::from_str(
         r#"{
-            "query": "subscription { helloWorld {kek} }"
+            "query": "subscription { helloWorld {id name} }"
         }"#,
     )
         .unwrap();
