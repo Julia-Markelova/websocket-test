@@ -1,17 +1,15 @@
 use std::pin::Pin;
-use sqlx::{Pool, Postgres};
-use sqlx::postgres::PgPoolOptions;
+use std::time::Duration;
+
 use futures::{Stream, StreamExt};
 use juniper::{
-    graphql_object, graphql_subscription, http::GraphQLRequest, DefaultScalarValue, EmptyMutation,
-    FieldError, RootNode, SubscriptionCoordinator,
+    DefaultScalarValue, EmptyMutation, FieldError, graphql_object, graphql_subscription,
+    http::GraphQLRequest, RootNode, SubscriptionCoordinator,
 };
 use juniper_subscriptions::Coordinator;
-
-
-use std::time::Duration;
+use sqlx::{Pool, Postgres};
+use sqlx::postgres::PgPoolOptions;
 use tokio::time;
-
 
 #[derive(Clone)]
 pub struct Database {
