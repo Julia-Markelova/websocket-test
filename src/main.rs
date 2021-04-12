@@ -13,13 +13,17 @@ use tokio::time;
 
 
 #[derive(Clone)]
-pub struct Database;
+pub struct Database {
+    name: String
+}
 
 impl juniper::Context for Database {}
 
 impl Database {
     fn new() -> Self {
-        Self {}
+        Self {
+            name: "hello".to_owned()
+        }
     }
 }
 
@@ -57,10 +61,12 @@ static mut START: i32 = 0;
 
 #[graphql_subscription(context = Database)]
 impl Subscription {
-    async fn hello_world() -> CustomStream {
+    async fn hello_world(context: &Database) -> CustomStream {
+        // https://stackoverflow.com/questions/58700741/is-there-any-way-to-create-a-async-stream-generator-that-yields-the-result-of-re
         let stream = futures::stream::unfold((), |state| async {
             unsafe {
                 if START < 5 {
+                    // print!("{}", context.name);
                     START = START + 1;
                     time::delay_for(Duration::from_secs(1)).await;
                     let weather = get_weather(START).await;
