@@ -75,8 +75,8 @@ impl Subscription {
                     // print!("{}", s);
                     START = START + 1;
                     time::delay_for(Duration::from_secs(1)).await;
-                    let weather = get_weather(START).await;
-                    Some((Ok(weather), ()))
+                    let task = get_task().await;
+                    Some((Ok(task), ()))
                 } else {
                     None
                 }
