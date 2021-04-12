@@ -18,6 +18,9 @@ juniper_subscriptions = { git = "https://github.com/graphql-rust/juniper", branc
 serde = { version = "1.0.116", features = ["derive"] }
 serde_json = "1.0.57"
 
+# database
+sqlx = { version = "0.4.2", features = ["runtime-tokio-native-tls", "postgres", "uuid", "chrono", "offline"] }
+
 # other
 futures = "0.3.5"
 tokio = { version = "0.2" }

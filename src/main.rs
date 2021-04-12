@@ -1,5 +1,6 @@
 use std::pin::Pin;
-
+use sqlx::{Pool, Postgres};
+use sqlx::postgres::PgPoolOptions;
 use futures::{Stream, StreamExt};
 use juniper::{
     graphql_object, graphql_subscription, http::GraphQLRequest, DefaultScalarValue, EmptyMutation,
@@ -14,15 +15,15 @@ use tokio::time;
 
 #[derive(Clone)]
 pub struct Database {
-    name: String
+    pub pool: Pool<Postgres>,
 }
 
 impl juniper::Context for Database {}
 
 impl Database {
-    fn new() -> Self {
+    fn new(pool: Pool<Postgres>) -> Self {
         Self {
-            name: "hello".to_owned()
+            pool
         }
     }
 }
@@ -62,11 +63,12 @@ static mut START: i32 = 0;
 #[graphql_subscription(context = Database)]
 impl Subscription {
     async fn hello_world(context: &Database) -> CustomStream {
+        // let s: &'static str = context.name.clone();
         // https://stackoverflow.com/questions/58700741/is-there-any-way-to-create-a-async-stream-generator-that-yields-the-result-of-re
         let stream = futures::stream::unfold((), |state| async {
             unsafe {
                 if START < 5 {
-                    // print!("{}", context.name);
+                    // print!("{}", s);
                     START = START + 1;
                     time::delay_for(Duration::from_secs(1)).await;
                     let weather = get_weather(START).await;
@@ -96,7 +98,11 @@ async fn main() {
         }"#,
     )
         .unwrap();
-    let ctx = Database::new();
+    let database_url = String::from("postgres://postgres:1234@localhost:55436/plan_design");
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&*database_url).await.unwrap();
+    let ctx = Database::new(pool.clone());
     let mut conn = coordinator.subscribe(&req, &ctx).await.unwrap();
     while let Some(result) = conn.next().await {
         println!("{}", serde_json::to_string(&result).unwrap());
