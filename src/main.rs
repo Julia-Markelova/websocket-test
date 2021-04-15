@@ -92,7 +92,6 @@ pub struct Subscription;
 
 type CustomStream = Pin<Box<dyn Stream<Item=Result<Task, FieldError>> + Send>>;
 
-static mut START: i32 = 0;
 
 #[graphql_subscription(context = WebSocketContext)]
 impl Subscription {
