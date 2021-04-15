@@ -67,6 +67,7 @@ impl Task {
 }
 
 async fn get_task(traces_dir: &str) -> Task {
+    println!("{}", traces_dir);
     let mut rng = rand::thread_rng();
     let index = rng.gen_range(1..5);
     let mut status;
