@@ -14,6 +14,7 @@ use tokio::time;
 #[derive(Clone)]
 pub struct WebSocketContext {
     pub pool: Pool<Postgres>,
+    pub traces_dir: String,
 }
 
 impl juniper::Context for WebSocketContext {}
@@ -21,7 +22,8 @@ impl juniper::Context for WebSocketContext {}
 impl WebSocketContext {
     fn new(pool: Pool<Postgres>, traces_dir: String) -> Self {
         Self {
-            pool
+            pool,
+            traces_dir
         }
     }
 }
