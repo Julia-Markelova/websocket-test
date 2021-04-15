@@ -1,13 +1,11 @@
 mod db_query;
-
+use juniper::GraphQLEnum;
+use serde::Deserialize;
 use std::pin::Pin;
 use std::time::Duration;
 use uuid::Uuid;
 use futures::{Stream, StreamExt};
-use juniper::{
-    DefaultScalarValue, EmptyMutation, FieldError, graphql_object, graphql_subscription,
-    http::GraphQLRequest, RootNode, SubscriptionCoordinator,
-};
+use juniper::{DefaultScalarValue, EmptyMutation, FieldError, graphql_object, graphql_subscription, http::GraphQLRequest, RootNode, SubscriptionCoordinator, Value};
 use juniper_subscriptions::Coordinator;
 use sqlx::{Pool, Postgres};
 use sqlx::postgres::PgPoolOptions;
@@ -38,9 +36,21 @@ impl Query {
 }
 
 
+#[derive(GraphQLEnum, Deserialize)]
+pub enum TaskStatus {
+    DRAFT,
+    SENT,
+    PREPARING,
+    SOLVING,
+    SOLVED,
+    FAILED,
+}
+
+
 struct Task {
     pub id: Uuid,
     pub name: String,
+    pub status: TaskStatus,
 }
 
 
@@ -48,6 +58,7 @@ struct Task {
 impl Task {
     fn id(&self) -> &Uuid { &self.id }
     fn name(&self) -> &str { &self.name }
+    fn status(&self) -> &TaskStatus {&self.status}
 }
 
 async fn get_task() -> Task {
