@@ -98,17 +98,18 @@ impl Subscription {
     async fn hello_world(context: &WebSocketContext, task_id: Uuid) -> CustomStream {
         // https://stackoverflow.com/questions/58700741/is-there-any-way-to-create-a-async-stream-generator-that-yields-the-result-of-re
         let stream = futures::stream::unfold(task_id.to_string(), |state| async move {
-            time::delay_for(Duration::from_secs(1)).await;
-            let dir = format!("{}/traces", state);
-            let task = get_task(&dir).await;
-            let task_id: String = match task.status {
-                TaskStatus::SOLVED => String::from("last_task"),
-                TaskStatus::FAILED => String::from("last_task"),
-                _ => state.clone(),
-            };
-            if state == "last_task" {
+            let last_task_id: &str = "last_task";
+            if state == last_task_id {
                 None
             } else {
+                time::delay_for(Duration::from_secs(1)).await;
+                let dir = format!("{}/traces", state);
+                let task = get_task(&dir).await;
+                let task_id: String = match task.status {
+                    TaskStatus::SOLVED => String::from(last_task_id),
+                    TaskStatus::FAILED => String::from(last_task_id),
+                    _ => state.clone(),
+                };
                 Some((Ok(task), task_id))
             }
         });
