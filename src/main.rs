@@ -12,14 +12,14 @@ use sqlx::postgres::PgPoolOptions;
 use tokio::time;
 
 #[derive(Clone)]
-pub struct Database {
+pub struct WebSocketContext {
     pub pool: Pool<Postgres>,
 }
 
-impl juniper::Context for Database {}
+impl juniper::Context for WebSocketContext {}
 
-impl Database {
-    fn new(pool: Pool<Postgres>) -> Self {
+impl WebSocketContext {
+    fn new(pool: Pool<Postgres>, traces_dir: String) -> Self {
         Self {
             pool
         }
@@ -28,7 +28,7 @@ impl Database {
 
 pub struct Query;
 
-#[graphql_object(context = Database)]
+#[graphql_object(context = WebSocketContext)]
 impl Query {
     fn hello_world() -> &str {
         "Hello World!"
@@ -75,10 +75,9 @@ type CustomStream = Pin<Box<dyn Stream<Item=Result<Task, FieldError>> + Send>>;
 
 static mut START: i32 = 0;
 
-#[graphql_subscription(context = Database)]
+#[graphql_subscription(context = WebSocketContext)]
 impl Subscription {
-    async fn hello_world(context: &Database) -> CustomStream {
-        // let s: &'static str = context.name.clone();
+    async fn hello_world(context: &WebSocketContext, task_id: Uuid) -> CustomStream {
         // https://stackoverflow.com/questions/58700741/is-there-any-way-to-create-a-async-stream-generator-that-yields-the-result-of-re
         let stream = futures::stream::unfold((), |state| async {
             unsafe {
@@ -97,7 +96,7 @@ impl Subscription {
     }
 }
 
-type Schema = RootNode<'static, Query, EmptyMutation<Database>, Subscription>;
+type Schema = RootNode<'static, Query, EmptyMutation<WebSocketContext>, Subscription>;
 
 fn schema() -> Schema {
     Schema::new(Query {}, EmptyMutation::new(), Subscription {})
@@ -117,7 +116,8 @@ async fn main() {
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(&*database_url).await.unwrap();
-    let ctx = Database::new(pool.clone());
+    let storage_dir: String = String::from("some dir");
+    let ctx = WebSocketContext::new(pool.clone(), storage_dir.clone());
     let mut conn = coordinator.subscribe(&req, &ctx).await.unwrap();
     while let Some(result) = conn.next().await {
         println!("{}", serde_json::to_string(&result).unwrap());
