@@ -1,15 +1,17 @@
-mod db_query;
-use juniper::GraphQLEnum;
-use serde::Deserialize;
 use std::pin::Pin;
 use std::time::Duration;
-use uuid::Uuid;
+
 use futures::{Stream, StreamExt};
 use juniper::{DefaultScalarValue, EmptyMutation, FieldError, graphql_object, graphql_subscription, http::GraphQLRequest, RootNode, SubscriptionCoordinator, Value};
+use juniper::GraphQLEnum;
 use juniper_subscriptions::Coordinator;
+use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use sqlx::postgres::PgPoolOptions;
 use tokio::time;
+use uuid::Uuid;
+
+mod db_query;
 
 #[derive(Clone)]
 pub struct WebSocketContext {
