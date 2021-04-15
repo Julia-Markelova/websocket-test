@@ -96,16 +96,26 @@ type CustomStream = Pin<Box<dyn Stream<Item=Result<Task, FieldError>> + Send>>;
 #[graphql_subscription(context = WebSocketContext)]
 impl Subscription {
     async fn hello_world(context: &WebSocketContext, task_id: Uuid) -> CustomStream {
+        // путь передается в стрим как начальное значение
+        // если просто использовать строковую переменную в стриме, то будет ошибка lifetime
         let traces_path = format!("{}/{}/traces", context.traces_dir, task_id.to_string());
 
         // https://stackoverflow.com/questions/58700741/is-there-any-way-to-create-a-async-stream-generator-that-yields-the-result-of-re
         let stream = futures::stream::unfold(traces_path, |path| async move {
+            // эта переменная объявляется каждый раз,
+            // тк ее не получается объявить извне из-за lifetime
             let last_task_path: &str = "last_task";
+            // если мы уже получили последний лог, то завершаем стрим
             if path == last_task_path {
                 None
             } else {
+                // иначе подождем немного
                 time::delay_for(Duration::from_secs(1)).await;
+                // получим новый лог
                 let task = get_task(&path).await;
+                // если лог последний, то передадим следующее значение пути как `last_task_path`,
+                // чтобы на след итерации мы вышли из стрима.
+                // иначе - оставляем текущее значение пути
                 let path: String = match task.status {
                     TaskStatus::SOLVED => String::from(last_task_path),
                     TaskStatus::FAILED => String::from(last_task_path),
