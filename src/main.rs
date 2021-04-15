@@ -96,7 +96,8 @@ type CustomStream = Pin<Box<dyn Stream<Item=Result<Task, FieldError>> + Send>>;
 impl Subscription {
     async fn hello_world(context: &WebSocketContext, task_id: Uuid) -> CustomStream {
         // https://stackoverflow.com/questions/58700741/is-there-any-way-to-create-a-async-stream-generator-that-yields-the-result-of-re
-        let stream = futures::stream::unfold(task_id.to_string(), |state| async move {
+        let path = format!("{}/{}", context.traces_dir, task_id.to_string());
+        let stream = futures::stream::unfold(path, |state| async move {
             let last_task_id: &str = "last_task";
             if state == last_task_id {
                 None
@@ -104,12 +105,12 @@ impl Subscription {
                 time::delay_for(Duration::from_secs(1)).await;
                 let dir = format!("{}/traces", state);
                 let task = get_task(&dir).await;
-                let task_id: String = match task.status {
+                let path: String = match task.status {
                     TaskStatus::SOLVED => String::from(last_task_id),
                     TaskStatus::FAILED => String::from(last_task_id),
                     _ => state.clone(),
                 };
-                Some((Ok(task), task_id))
+                Some((Ok(task), path))
             }
         });
         Box::pin(stream)
