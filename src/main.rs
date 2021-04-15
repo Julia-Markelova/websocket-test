@@ -99,19 +99,17 @@ impl Subscription {
         let traces_path = format!("{}/{}/traces", context.traces_dir, task_id.to_string());
 
         // https://stackoverflow.com/questions/58700741/is-there-any-way-to-create-a-async-stream-generator-that-yields-the-result-of-re
-        let path = format!("{}/{}", context.traces_dir, task_id.to_string());
-        let stream = futures::stream::unfold(path, |state| async move {
-            let last_task_id: &str = "last_task";
-            if state == last_task_id {
+        let stream = futures::stream::unfold(traces_path, |path| async move {
+            let last_task_path: &str = "last_task";
+            if path == last_task_path {
                 None
             } else {
                 time::delay_for(Duration::from_secs(1)).await;
-                let dir = format!("{}/traces", state);
-                let task = get_task(&dir).await;
+                let task = get_task(&path).await;
                 let path: String = match task.status {
-                    TaskStatus::SOLVED => String::from(last_task_id),
-                    TaskStatus::FAILED => String::from(last_task_id),
-                    _ => state.clone(),
+                    TaskStatus::SOLVED => String::from(last_task_path),
+                    TaskStatus::FAILED => String::from(last_task_path),
+                    _ => path,
                 };
                 Some((Ok(task), path))
             }
