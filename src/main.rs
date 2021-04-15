@@ -69,7 +69,6 @@ impl Task {
 async fn get_task(traces_dir: &str) -> Task {
     let mut rng = rand::thread_rng();
     let index = rng.gen_range(1..5);
-    println!("index = {}", index);
     let mut status;
     if index == 1 {
         status = TaskStatus::DRAFT
@@ -82,7 +81,7 @@ async fn get_task(traces_dir: &str) -> Task {
     }
     Task {
         id: Uuid::new_v4(),
-        name: "kek".to_owned(),
+        name: index.to_string(),
         status: status,
     }
 }
