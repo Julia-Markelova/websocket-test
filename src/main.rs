@@ -97,14 +97,18 @@ static mut START: i32 = 0;
 impl Subscription {
     async fn hello_world(context: &WebSocketContext, task_id: Uuid) -> CustomStream {
         // https://stackoverflow.com/questions/58700741/is-there-any-way-to-create-a-async-stream-generator-that-yields-the-result-of-re
-        let stream = futures::stream::unfold((), |state| async {
+        let s = task_id.to_string();
+        let lol = s.clone();
+        let stream = futures::stream::unfold(s, |state| async move {
+            let dir = format!("{}/traces", state);
             unsafe {
                 if START < 5 {
                     // print!("{}", s);
                     START = START + 1;
                     time::delay_for(Duration::from_secs(1)).await;
-                    let task = get_task().await;
-                    Some((Ok(task), ()))
+                    let task = get_task(&dir, START).await;
+                    let task_id = state.clone();
+                    Some((Ok(task), task_id))
                 } else {
                     None
                 }
@@ -126,7 +130,7 @@ async fn main() {
     let coordinator = Coordinator::new(schema);
     let req: GraphQLRequest<DefaultScalarValue> = serde_json::from_str(
         r#"{
-            "query": "subscription { helloWorld {id name} }"
+            "query": "subscription { helloWorld (taskId: \"8bcb05d6-81a1-477f-826c-70408640d24c\") {id name} }"
         }"#,
     )
         .unwrap();
