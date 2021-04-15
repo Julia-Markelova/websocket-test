@@ -5,12 +5,12 @@ use futures::{Stream, StreamExt};
 use juniper::{DefaultScalarValue, EmptyMutation, FieldError, graphql_object, graphql_subscription, http::GraphQLRequest, RootNode, SubscriptionCoordinator, Value};
 use juniper::GraphQLEnum;
 use juniper_subscriptions::Coordinator;
+use rand::Rng;
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use sqlx::postgres::PgPoolOptions;
 use tokio::time;
 use uuid::Uuid;
-use rand::Rng;
 
 mod db_query;
 
@@ -26,7 +26,7 @@ impl WebSocketContext {
     fn new(pool: Pool<Postgres>, traces_dir: String) -> Self {
         Self {
             pool,
-            traces_dir
+            traces_dir,
         }
     }
 }
@@ -63,7 +63,7 @@ struct Task {
 impl Task {
     fn id(&self) -> &Uuid { &self.id }
     fn name(&self) -> &str { &self.name }
-    fn status(&self) -> &TaskStatus {&self.status}
+    fn status(&self) -> &TaskStatus { &self.status }
 }
 
 async fn get_task(traces_dir: &str) -> Task {
@@ -131,7 +131,7 @@ async fn main() {
     let coordinator = Coordinator::new(schema);
     let req: GraphQLRequest<DefaultScalarValue> = serde_json::from_str(
         r#"{
-            "query": "subscription { helloWorld (taskId: \"8bcb05d6-81a1-477f-826c-70408640d24c\") {id name} }"
+            "query": "subscription { helloWorld (taskId: \"8bcb05d6-81a1-477f-826c-70408640d24c\") {id name status} }"
         }"#,
     )
         .unwrap();
@@ -146,7 +146,6 @@ async fn main() {
         println!("{}", serde_json::to_string(&result).unwrap());
     }
 }
-
 
 
 // https://stackoverflow.com/questions/65101589/how-does-one-use-sqlx-with-juniper-subscriptions-in-rust
