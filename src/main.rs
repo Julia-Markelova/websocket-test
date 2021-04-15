@@ -10,6 +10,7 @@ use sqlx::{Pool, Postgres};
 use sqlx::postgres::PgPoolOptions;
 use tokio::time;
 use uuid::Uuid;
+use rand::Rng;
 
 mod db_query;
 
@@ -65,18 +66,18 @@ impl Task {
     fn status(&self) -> &TaskStatus {&self.status}
 }
 
-async fn get_task(traces_dir: &str, index: i32) -> Task {
+async fn get_task(traces_dir: &str) -> Task {
+    let mut rng = rand::thread_rng();
+    let index = rng.gen_range(1..5);
+    println!("index = {}", index);
     let mut status;
     if index == 1 {
         status = TaskStatus::DRAFT
-    }
-    if index == 2 {
+    } else if index == 2 {
         status = TaskStatus::SENT
-    }
-    if index == 3 {
+    } else if index == 3 {
         status = TaskStatus::SOLVING
-    }
-    else {
+    } else {
         status = TaskStatus::SOLVED
     }
     Task {
