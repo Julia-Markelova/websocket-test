@@ -63,10 +63,24 @@ impl Task {
     fn status(&self) -> &TaskStatus {&self.status}
 }
 
-async fn get_task() -> Task {
+async fn get_task(traces_dir: &str, index: i32) -> Task {
+    let mut status;
+    if index == 1 {
+        status = TaskStatus::DRAFT
+    }
+    if index == 2 {
+        status = TaskStatus::SENT
+    }
+    if index == 3 {
+        status = TaskStatus::SOLVING
+    }
+    else {
+        status = TaskStatus::SOLVED
+    }
     Task {
         id: Uuid::new_v4(),
-        name: "kek".to_owned()
+        name: "kek".to_owned(),
+        status: status,
     }
 }
 
